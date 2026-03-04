@@ -38,5 +38,5 @@ jobs:
         working-directory: terraform
         run: |
           terraform apply -auto-approve \
-            -var"job_name=${{ github.event.inputs.job_name || github.event.client_payload.job_name }}"
+            -var="job_name=${{ github.event.inputs.job_name || github.event.client_payload.job_name }}"
           
