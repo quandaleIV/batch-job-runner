@@ -8,7 +8,8 @@ systemctl enable docker
 aws ecr get-login-password --region ap-southeast-2 | docker login --username AWS --password-stdin 515052777430.dkr.ecr.ap-southeast-2.amazonaws.com
 
 # Pull the correct Docker Image from ECR
-docker pull 515052777430.dkr.ecr.ap-southeast-2.amazonaws.com/batch-job/${job_name}:latest
+docker pull 515052777430.dkr.ecr.ap-southeast-2.amazonaws.com/batch-job/$docker tag batch-job/image-resize:latest 515052777430.dkr.ecr.ap-southeast-2.amazonaws.com/batch-job/image-resize:latest
+{job_name}:latest
 
 # Run the job
 docker run --rm \
@@ -16,7 +17,7 @@ docker run --rm \
   -e OUTPUT_BUCKET=batch-job-runner-data \
   -e INPUT_PREFIX=input/ \
   -e OUTPUT_PREFIX=output/ \
-  -e TWELVE_DATA_API_KEY=demo \
+  -e TWELVE_DATA_API_KEY=0f731d71e88d43fa9cf8362dc0a38070 \
   515052777430.dkr.ecr.ap-southeast-2.amazonaws.com/batch-job/${job_name}:latest
 
 echo "Job complete"
