@@ -58,6 +58,12 @@ resource "aws_iam_role_policy_attachment" "ec2_s3" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
 }
 
+#give ec2 access to ecr
+resource "aws_iam_role_policy_attachment" "ec2_ecr" {
+  role = aws_iam_role.ec2_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+}
+
 #create instance profile for ec2 instance
 resource "aws_iam_instance_profile" "ec2_profile" {
   name = "batch-job-ec2-profile"
@@ -73,7 +79,9 @@ resource "aws_instance" "batch_job" {
   vpc_security_group_ids = [aws_security_group.batch_job.id]
 
   #run script as soon as instance starts up
-  user_data = file("${path.module}/../scripts/cloud-init.sh")
+  user_data = templatefile("${path.module}/../scripts/cloud-init.sh", {
+    job_name = var.job_name
+  })
 
   #tag this resource
   tags = {
