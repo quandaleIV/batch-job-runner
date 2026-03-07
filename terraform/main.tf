@@ -90,6 +90,92 @@ resource "aws_instance" "batch_job" {
   }
 }
 
+# setup sns topic for CloudWatch alarm notifications
+resource "aws_sns_topic" "idle_alert" {
+  name = "batch-job-idle-alert"
+}
+
+# Create CloudWatch alarm, triggers when ec2 CPU < 5% for 2 consec 5-min periods"
+resource "aws_cloudwatch_metric_alarm" "idle_ec2" {
+  alarm_name = "batch-job-idle-ec2"
+  comparison_operator = "LessThanThreshold"
+  evaluation_periods = 2
+  metric_name = "CPUUtilization"
+  name_space = "AWS/EC2"
+  period = 300
+  statistics = "Average"
+  threshold = 5
+  alarm_actions = [aws_sns_topic.idle_alert.arn]
+  dimensions = {InstanceId = aws_instance.batch_job.id }
+}
+
+# Create an IAM role for the failsafe lambda function
+resource "aws_iam_role" "failsafe-lambda-role" {
+  name = "batch-job-failsafe-lambda-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action    = "sts:AssumeRole"
+      Effect    = "Allow"
+      Principal = { Service = "lambda.amazonaws.com" }
+    }]
+  })
+}
+
+# Attach policies to the failsafe lambda role
+resource "aws_iam_role_policy" "failsafe_lambda_policy" {
+  name = "batch-job-failsafe-lambda-policy"
+  role = aws_iam_role.failsafe_lambda_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["ec2:TerminateInstances", "ec2:DescribeInstances"]
+        Resource = "*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+# Failsafe lambda function
+resource "aws_lambda_function" "failsafe" {
+  filename      = "${path.module}/../failsafe/failsafe.zip"
+  function_name = "batch-job-failsafe"
+  role          = aws_iam_role.failsafe_lambda_role.arn
+  handler       = "failsafe.lambda_handler"
+  runtime       = "python3.11"
+
+  tags = {
+    Name = "batch-job-failsafe"
+  }
+}
+
+# Allow SNS to invoke the failsafe Lambda
+resource "aws_lambda_permission" "sns_invoke_failsafe" {
+  statement_id  = "AllowSNSInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.failsafe.function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.idle_alert.arn
+}
+
+# Subscribe Lambda to SNS topic
+resource "aws_sns_topic_subscription" "failsafe_subscription" {
+  topic_arn = aws_sns_topic.idle_alert.arn
+  protocol  = "lambda"
+  endpoint  = aws_lambda_function.failsafe.arn
+}
+
+
+
 
 
 
