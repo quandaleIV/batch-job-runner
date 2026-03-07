@@ -1,6 +1,6 @@
-# JobFlow — On-Demand Batch Job Platform on AWS
+# JobFlow | On-Demand Batch Job Platform on AWS
 
-A cloud-native, event-driven batch compute platform built on AWS. A Discord slash command triggers an ephemeral EC2 worker via GitHub Actions and Terraform, runs a containerised job, stores output to S3, and self-destructs — leaving zero idle infrastructure and zero cost between runs.
+A cloud-native, event-driven batch compute platform built on AWS. A Discord slash command triggers an ephemeral EC2 worker via GitHub Actions and Terraform, runs a containerised job, stores output to S3, and self-destructs, leaving zero idle infrastructure and zero cost between runs.
 
 ---
 
