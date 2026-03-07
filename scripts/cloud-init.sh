@@ -30,7 +30,7 @@ echo "Job complete"
 curl -X POST \
   -H "Authorization: token $GITHUB_TOKEN" \
   -H "Accept: application/vnd.github.v3+json" \
-  https://api.github.com/repos/${github_repo}/actions/workflows/destroy.yml/dispatches \
+  https://api.github.com/repos/$GITHUB_REPO/actions/workflows/destroy.yml/dispatches \
   -d '{"ref":"main"}'
 
 # Shut down the instance
