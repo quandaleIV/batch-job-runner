@@ -5,39 +5,7 @@ A cloud-native, event-driven batch compute platform built on AWS. A Discord slas
 ---
 
 ## Architecture
-
-```
-Discord /run command
-        │
-        ▼
-Lambda (Discord Bot)
-        │
-        ▼
-API Gateway → GitHub Actions (repository_dispatch)
-        │
-        ▼
-Terraform Apply
-        │
-        ▼
-EC2 t3.micro spins up
-        │
-        ▼
-cloud-init pulls Docker image from ECR
-        │
-        ▼
-Job runs → output saved to S3
-        │
-        ▼
-cloud-init triggers destroy workflow via GitHub API
-        │
-        ▼
-Terraform Destroy → all resources terminated
-        │
-        ▼
-CloudWatch failsafe → terminates any stuck instances via SNS + Lambda
-```
-
----
+![Architecture](docs/architecture.png)
 
 ## How It Works
 
