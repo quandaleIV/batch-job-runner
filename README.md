@@ -1,4 +1,4 @@
-# JobFlow | Event-Driven Compute Platform
+# Batch Job Runner | Event-Driven Compute Platform
 
 A cloud-native, event-driven batch compute platform built on AWS. A Discord slash command triggers an ephemeral EC2 worker via GitHub Actions and Terraform, runs a containerized job, stores output to S3, and self-destructs. Leaving zero idle infrastructure and zero cost between runs.
 
