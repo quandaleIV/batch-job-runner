@@ -1,41 +1,11 @@
 # JobFlow — On-Demand Batch Job Platform on AWS
 
-A cloud-native, event-driven batch compute platform built on AWS. A Discord slash command triggers an ephemeral EC2 worker via GitHub Actions and Terraform, runs a containerised job, stores output to S3, and self-destructs — leaving zero idle infrastructure and zero cost between runs.
+A cloud-native, event-driven batch compute platform built on AWS. A Discord slash command triggers an ephemeral EC2 worker via GitHub Actions and Terraform, runs a containerized job, stores output to S3, and self-destructs. Leaving zero idle infrastructure and zero cost between runs.
 
 ---
 
 ## Architecture
-
-```
-Discord /run command
-        │
-        ▼
-Lambda (Discord Bot)
-        │
-        ▼
-API Gateway → GitHub Actions (repository_dispatch)
-        │
-        ▼
-Terraform Apply
-        │
-        ▼
-EC2 t3.micro spins up
-        │
-        ▼
-cloud-init pulls Docker image from ECR
-        │
-        ▼
-Job runs → output saved to S3
-        │
-        ▼
-cloud-init triggers destroy workflow via GitHub API
-        │
-        ▼
-Terraform Destroy → all resources terminated
-        │
-        ▼
-CloudWatch failsafe → terminates any stuck instances via SNS + Lambda
-```
+![Architecture](docs/architecture.png)
 
 ---
 
@@ -45,10 +15,10 @@ CloudWatch failsafe → terminates any stuck instances via SNS + Lambda
 2. Discord bot (AWS Lambda) receives the slash command
 3. Lambda triggers a GitHub Actions `repository_dispatch` event via API Gateway
 4. GitHub Actions runs Terraform to provision an EC2 instance
-5. `cloud-init` bootstraps the instance — installs Docker, authenticates with ECR, pulls the correct job image
+5. `cloud-init` bootstraps the instance, installs Docker, authenticates with ECR, pulls the correct job image
 6. The Docker container runs the job and writes output to S3
 7. On completion, `cloud-init` triggers the GitHub Actions destroy workflow via the GitHub API
-8. Terraform destroys all provisioned resources — EC2, security group, IAM roles, CloudWatch alarm, SNS topic, failsafe Lambda
+8. Terraform destroys all provisioned resources. EC2, security group, IAM roles, CloudWatch alarm, SNS topic, failsafe Lambda
 9. If the instance ever gets stuck running idle, a CloudWatch alarm detects CPU < 5% for 10 minutes and triggers an SNS notification → Lambda → EC2 termination
 
 ---
@@ -58,14 +28,13 @@ CloudWatch failsafe → terminates any stuck instances via SNS + Lambda
 | Service | Purpose |
 |---|---|
 | Lambda | Discord bot + CloudWatch failsafe handler |
-| API Gateway | Receives Discord interactions |
 | EC2 | Ephemeral compute for each job |
 | ECR | Docker image registry for job containers |
 | S3 | Job input/output storage + Terraform remote state |
 | CloudWatch | CPU alarm for idle instance detection |
 | SNS | Notification hub between CloudWatch and failsafe Lambda |
 | IAM | Least-privilege roles for EC2, Lambda, GitHub Actions (OIDC) |
-| SSM Parameter Store | Secure secrets storage — no hardcoded credentials |
+| SSM Parameter Store | Secure secrets storage, no hardcoded credentials |
 | DynamoDB | Terraform state locking |
 
 ---
@@ -78,7 +47,7 @@ CloudWatch failsafe → terminates any stuck instances via SNS + Lambda
 | `pdf-report` | Fetches forex OHLCV data, runs technical analysis, generates a PDF report |
 | `data-scrape` | Scrapes external data, processes and saves structured JSON to S3 |
 
-Adding a new job type requires only a new Docker image pushed to ECR — the platform infrastructure is job-agnostic.
+Adding a new job type requires only a new Docker image pushed to ECR. The platform infrastructure is job-agnostic.
 
 ---
 
@@ -89,7 +58,7 @@ Adding a new job type requires only a new Docker image pushed to ECR — the pla
 - **Docker** — each job packaged as an independent image
 - **cloud-init** — bootstraps EC2, pulls correct ECR image, runs job
 - **Python** — Discord bot, failsafe Lambda, job scripts
-- **discord.py / ecdsa** — slash command handling and Ed25519 signature verification
+- **ecdsa** — Ed25519 signature verification for Discord interactions
 
 ---
 
