@@ -101,16 +101,16 @@ resource "aws_cloudwatch_metric_alarm" "idle_ec2" {
   comparison_operator = "LessThanThreshold"
   evaluation_periods = 2
   metric_name = "CPUUtilization"
-  name_space = "AWS/EC2"
+  namespace = "AWS/EC2"
   period = 300
-  statistics = "Average"
+  statistic = "Average"
   threshold = 5
   alarm_actions = [aws_sns_topic.idle_alert.arn]
   dimensions = {InstanceId = aws_instance.batch_job.id }
 }
 
 # Create an IAM role for the failsafe lambda function
-resource "aws_iam_role" "failsafe-lambda-role" {
+resource "aws_iam_role" "failsafe_lambda_role" {
   name = "batch-job-failsafe-lambda-role"
 
   assume_role_policy = jsonencode({
