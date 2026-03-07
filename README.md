@@ -109,7 +109,7 @@ aws s3 cp your-image.jpg s3://batch-job-runner-data/input/test.jpg
 
 ### 4. Store secrets in SSM Parameter Store
 
-All secrets are stored in AWS SSM — nothing sensitive is hardcoded anywhere in the codebase. The EC2 instance fetches these at runtime via the AWS CLI before running each job.
+All secrets are stored in AWS SSM. Nothing sensitive is hardcoded anywhere in the codebase. The EC2 instance fetches these at runtime via the AWS CLI before running each job.
 
 ```bash
 aws ssm put-parameter --name /batch-job-runner/discord-public-key --value "YOUR_VALUE" --type SecureString --region ap-southeast-2
@@ -149,11 +149,11 @@ Create an IAM OIDC identity provider for GitHub in your AWS account, then create
 Attach `AdministratorAccess` to the role (or a scoped policy covering EC2, S3, Lambda, IAM, CloudWatch, SNS, ECR, SSM).
 
 Add the role ARN as a secret in your GitHub repo:
-- `AWS_ROLE_ARN` — ARN of the IAM role
+- `AWS_ROLE_ARN`, ARN of the IAM role
 
 ### 6. Create ECR repositories and build Docker images for each job
 
-Each job is a separate Docker image stored in ECR. The platform is job-agnostic — `cloud-init.sh` pulls the correct image based on the job name passed in at runtime.
+Each job is a separate Docker image stored in ECR. The platform is job-agnostic, `cloud-init.sh` pulls the correct image based on the job name passed in at runtime.
 
 Create an ECR repository for each job:
 
@@ -178,7 +178,7 @@ docker tag batch-job/image-resize:latest YOUR_ACCOUNT_ID.dkr.ecr.ap-southeast-2.
 docker push YOUR_ACCOUNT_ID.dkr.ecr.ap-southeast-2.amazonaws.com/batch-job/image-resize:latest
 ```
 
-Repeat for `pdf-report` and `data-scrape`. Each `Dockerfile` in `jobs/` contains the job logic. The platform does not care what is inside the image — it just pulls and runs it.
+Repeat for `pdf-report` and `data-scrape`. Each `Dockerfile` in `jobs/` contains the job logic. The platform does not care what is inside the image, it just pulls and runs it.
 
 ### 7. Initialise Terraform
 
@@ -191,7 +191,7 @@ This connects to the S3 remote state backend and downloads the AWS provider.
 
 ### 8. Package and deploy the Discord bot Lambda
 
-The bot is a Python Lambda function that verifies Discord's Ed25519 signature using the `ecdsa` library and triggers GitHub Actions via `repository_dispatch`. It must be built inside the Lambda runtime environment using Docker to avoid native binary incompatibility — libraries with compiled C extensions built on macOS will not work on Amazon Linux.
+The bot is a Python Lambda function that verifies Discord's Ed25519 signature using the `ecdsa` library and triggers GitHub Actions via `repository_dispatch`. It must be built inside the Lambda runtime environment using Docker to avoid native binary incompatibility. Libraries with compiled C extensions built on macOS will not work on Amazon Linux.
 
 ```bash
 cd bot
@@ -223,7 +223,7 @@ aws lambda create-function-url-config \
   --region ap-southeast-2
 ```
 
-Add both permissions required for a public Function URL. Both are necessary — `lambda:InvokeFunctionUrl` alone results in a 403 Forbidden:
+Add both permissions required for a public Function URL. Both are necessary, `lambda:InvokeFunctionUrl` alone results in a 403 Forbidden:
 
 ```bash
 aws lambda add-permission \
@@ -266,7 +266,7 @@ You should see a `201` response confirming the command was registered.
 
 ### 11. Set the Lambda Function URL as the Discord Interactions Endpoint URL
 
-In the Discord Developer Portal, go to your app, click **General Information**, and paste your Lambda Function URL into the **Interactions Endpoint URL** field. Click **Save Changes** — Discord will send a signed PING to verify the endpoint responds correctly.
+In the Discord Developer Portal, go to your app, click **General Information**, and paste your Lambda Function URL into the **Interactions Endpoint URL** field. Click **Save Changes** and Discord will send a signed PING to verify the endpoint responds correctly.
 
 ### 12. Run a job
 
@@ -282,28 +282,28 @@ The full pipeline runs automatically: Discord sends the command to Lambda, Lambd
 
 ## Cost
 
-Each job run on a `t3.micro` instance costs approximately **$0.001–$0.003** depending on job duration. All infrastructure is destroyed after each run — there are no idle costs between jobs.
+Each job run on a `t3.micro` instance costs approximately **$0.001–$0.003** depending on job duration. All infrastructure is destroyed after each run, there are no idle costs between jobs.
 
 ---
 
 ## Resume Bullets
 
 ```
-• Built JobFlow, an on-demand batch compute platform on AWS — Discord slash command triggers 
+• Built JobFlow, an on-demand batch compute platform on AWS, Discord slash command triggers 
   GitHub Actions via Lambda and API Gateway, Terraform provisions ephemeral EC2, cloud-init 
   pulls job-specific Docker image from ECR, output stored to S3, infrastructure self-destructs 
   on completion via automated Terraform destroy
 
 • Designed job-agnostic architecture supporting multiple workload types via a containerised 
-  job registry in ECR — adding a new job requires only a new Docker image, no infrastructure changes
+  job registry in ECR and adding a new job requires only a new Docker image, no infrastructure changes
 
-• Implemented cost-optimisation failsafe using CloudWatch, SNS, and Lambda — automatically 
+• Implemented cost-optimisation failsafe using CloudWatch, SNS, and Lambda which automatically 
   terminates idle EC2 workers tagged as ephemeral after 10 minutes of CPU utilisation below 5%
 
-• Configured OIDC trust between GitHub Actions and AWS — eliminated long-lived credentials 
+• Configured OIDC trust between GitHub Actions and AWS eliminating long-lived credentials 
   from the CI/CD pipeline entirely
 
-• Secured all secrets in AWS SSM Parameter Store — no hardcoded credentials anywhere in 
+• Secured all secrets in AWS SSM Parameter Store preventing hardcoded credentials anywhere in 
   the codebase or CI/CD pipeline
 ```
 
